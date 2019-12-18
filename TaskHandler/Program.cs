@@ -16,7 +16,7 @@ namespace TaskHandler
 
             if (result == 0x9000)
             {
-                result = handler.ContinueContactlessTransaction(5000);
+                result = handler.ContinueContactlessTransaction(5000).Result;
                 Console.WriteLine("{0}: CLess Transaction - status=0x0{1:X4}", DateTime.Now.ToString("yyyyMMdd:HHmmss"), result);
             }
 

@@ -23,7 +23,7 @@ namespace TaskHandler.Extensions
                             // ReSharper disable once AccessToDisposedClosure (in this case, CancelTcs will never be called outside the using)
                             if (timeoutCancelTokenSource?.IsCancellationRequested ?? false)
                             {
-                                tcs.TrySetException(new TimeoutException($"WaitAsync timed out after {timeoutMs}ms"));
+                                tcs.TrySetException(new TimeoutException($"operation timed out after {timeoutMs}ms"));
                             }
                             else
                             {
@@ -46,18 +46,14 @@ namespace TaskHandler.Extensions
 
                         if (tcs.Task.IsCompleted)
                         {
-                            // We do another await here so that if the tcs.Task has faulted or has been canceled we won't wrap those exceptions
-                            // in a nested exception.  While technically accessing the tcs.Task.Result will generate the same exception the
-                            // exception will be wrapped in a nested exception.  We don't want that nesting so we just await.
                             await tcs.Task;
                             return tcs.Task.Result;
                         }
 
-                        // It wasn't the tcs.Task that got us our of the above WhenAny so go ahead and timeout or cancel the operation.
-                        //
+                        // operation timed out
                         if (timeoutCancelTokenSource?.IsCancellationRequested ?? false)
                         {
-                            throw new TimeoutException($"WaitAsync timed out after {timeoutMs}ms");
+                            throw new TimeoutException($"operation timed out after {timeoutMs}ms");
                         }
 
                         throw new OperationCanceledException();

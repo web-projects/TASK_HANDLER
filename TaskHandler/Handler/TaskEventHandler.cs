@@ -55,54 +55,48 @@ namespace TaskHandler.Handler
             return cardStatus;
         }
 
-        public int ContinueContactlessTransaction(int timeout)
+        public async Task<int> ContinueContactlessTransaction(int timeout)
         {
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
             Console.WriteLine($"{DateTime.Now.ToString("yyyyMMdd:HHmmss")}: CLESS timer start - ----------------");
 
-            _CLessStatusResult = new TaskCompletionSource<int>();
-            _ResponseCLessHandlersSubscribed++;
-            ResponseCLessHandler += ContactlessStatusHandler;
+            int cardStatus = (int)StatusCodes.VipaSW1SW2Codes.Failure;
 
-            //observable.Subscribe(subscription =>
-            //{
-            //    if (subscription)
-            //    { 
-            //        task_completion_source.SetResult(true);
-            //    }
-            //});
-
-            var cancelTokenSource = new CancellationTokenSource(5000);
-            CancellationToken token = cancelTokenSource.Token;
-
-            //await _CLessStatusResult.Task.WaitAsync(cancelTokenSource);
-            //await TaskCompletionSourceExtension.WaitAsync(_CLessStatusResult, token, 5000);
-
-            int command = 0x0003;
-            Console.WriteLine("{0}: Continue CLess    - status=0x0{1:X4}", DateTime.Now.ToString("yyyyMMdd:HHmmss"), command);
-            WriteSingleCmd(command);
-
-            Task.Factory.StartNew(async () =>
+            try
             {
-                await Task.Delay(timeout);
-                if (_CLessStatusResult?.Task.IsCompleted == false)
-                {
-                    _CLessStatusResult?.TrySetResult((int)StatusCodes.VipaSW1SW2Codes.Failure);
-                }
-            });
+                _CLessStatusResult = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
+                _ResponseCLessHandlersSubscribed++;
+                ResponseCLessHandler += ContactlessStatusHandler;
 
-            int cardStatus = _CLessStatusResult.Task.Result;
+                int command = 0x0003;
+                Console.WriteLine("{0}: Continue CLess    - status=0x0{1:X4}", DateTime.Now.ToString("yyyyMMdd:HHmmss"), command);
+                WriteSingleCmd(command);
 
-            ResponseCLessHandler -= ContactlessStatusHandler;
-            _ResponseCLessHandlersSubscribed--;
+                var cancelTokenSource = new CancellationTokenSource(5000);
+                await TaskCompletionSourceExtension.WaitAsync(_CLessStatusResult, cancelTokenSource.Token, 2000);
 
-            stopWatch.Stop();
-            TimeSpan ts = stopWatch.Elapsed;
-            string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
-                        ts.Hours, ts.Minutes, ts.Seconds,
-                        ts.Milliseconds / 10);
-            Console.WriteLine($"{DateTime.Now.ToString("yyyyMMdd:HHmmss")}: CLESS timer stop  - {elapsedTime}");
+                cardStatus = _CLessStatusResult.Task.Result;
+
+                ResponseCLessHandler -= ContactlessStatusHandler;
+                _ResponseCLessHandlersSubscribed--;
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("\r\n=========================== TIMEOUT ERROR ===========================");
+                Console.WriteLine($"{DateTime.Now.ToString("yyyyMMdd:HHmmss")}: {e.Message}");
+                Console.WriteLine("=====================================================================\r\n");
+            }
+            finally
+            {
+                stopWatch.Stop();
+                TimeSpan ts = stopWatch.Elapsed;
+                string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}",
+                    ts.Hours, ts.Minutes, ts.Seconds,
+                    ts.Milliseconds);
+                Console.WriteLine($"{DateTime.Now.ToString("yyyyMMdd:HHmmss")}: CLESS timer stop  - {elapsedTime}");
+            }
 
             return cardStatus;
         }
