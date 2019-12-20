@@ -8,8 +8,9 @@ namespace TaskHandler.Helpers
     {
         public enum VipaSW1SW2Codes
         {
-            Failure = 0x0000,
-            Success = 0x9000
+            Success = 0x9000,
+            Timeout = 0xFFFE,
+            Failure = 0xFFFF
         }
     }
 }
