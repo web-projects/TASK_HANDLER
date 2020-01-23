@@ -1,12 +1,21 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
+using TaskHandler.Devices.Simulator.Helpers;
 using TaskHandler.Handler;
 
 namespace TaskHandler.Devices.Simulator
 {
     public class SimulatorDevice
     {
+        readonly TaskEventHandler device;
+
+        public SimulatorDevice()
+        {
+            device = new TaskEventHandler();
+        }
+
         public void ProcessCardInfo(CancellationTokenSource cancellationTokenSource, int timeout)
         {
             Stopwatch stopWatch = new Stopwatch();
@@ -17,19 +26,29 @@ namespace TaskHandler.Devices.Simulator
 
                 stopWatch.Start();
 
-                TaskEventHandler device = new TaskEventHandler();
+                // task 1
+                Task<(int, int)> result = device.ProcessContactlessTransaction(cancellationTokenSource.Token, timeout);
 
-                (int, int) result = device.ProcessContactlessTransaction(cancellationTokenSource.Token, timeout);
-                Console.WriteLine("{0}: (2) ProcessCLessTrans  - status=0x0{1:X4}, result=0x0{2:X4}", DateTime.Now.ToString("yyyyMMdd:HHmmss"), result.Item1, result.Item2);
-
-                if (result.Item2 == 0x9000)
+                if (result.Result.Item2 == 0x9000)
                 {
-                    result = device.ContinueContactlessTransaction(cancellationTokenSource.Token, timeout);
-                    Console.WriteLine("{0}: (4) ContinueCLessTrans - status=0x0{1:X4}, result=0x0{2:X4}", DateTime.Now.ToString("yyyyMMdd:HHmmss"), result.Item1, result.Item2);
-                }
+                    Console.WriteLine("{0}: (2) SimulatorDevice:ProcessCLessTrans  - status=0x0{1:X4}, result=0x0{2:X4}", DateTime.Now.ToString("yyyyMMdd:HHmmss"), result.Result.Item1, result.Result.Item2);
 
-                result = device.CompleteContactlessTransaction(cancellationTokenSource.Token, timeout);
-                Console.WriteLine("{0}: (6) CompleteCLessTrans - status=0x0{1:X4}, result=0x0{2:X4}", DateTime.Now.ToString("yyyyMMdd:HHmmss"), result.Item1, result.Item2);
+                    // task 2
+                    result = device.ContinueContactlessTransaction(cancellationTokenSource.Token, timeout);
+
+                    if (result.Result.Item2 == 0x9000)
+                    {
+                        Console.WriteLine("{0}: (4) SimulatorDevice:ContinueCLessTrans - status=0x0{1:X4}, result=0x0{2:X4}", DateTime.Now.ToString("yyyyMMdd:HHmmss"), result.Result.Item1, result.Result.Item2);
+
+                        // task 3
+                        result = device.CompleteContactlessTransaction(cancellationTokenSource.Token, timeout);
+
+                        if (result.Result.Item2 == 0x9000)
+                        {
+                            Console.WriteLine("{0}: (6) SimulatorDevice:CompleteCLessTrans - status=0x0{1:X4}, result=0x0{2:X4}", DateTime.Now.ToString("yyyyMMdd:HHmmss"), result.Result.Item1, result.Result.Item2);
+                        }
+                    }
+                }
             }
             catch (AggregateException ae)
             {
@@ -59,14 +78,27 @@ namespace TaskHandler.Devices.Simulator
 
                 stopWatch.Start();
 
-                TaskEventHandler device = new TaskEventHandler();
-                (int, int) result = device.GetZip(cancellationTokenSource.Token, timeout);
+                // task 1
+                Task<(DeviceInfoObject, int)> deviceInfo = device.GetDeviceInfo(cancellationTokenSource.Token, timeout);
+
+                if (deviceInfo.Result.Item2 == 0x9000)
+                {
+                    Console.WriteLine("{0}: (2) SimulatorDevice:GetDeviceInfo - status=0x0{1:X4}, result=0x0{2:X4}", DateTime.Now.ToString("yyyyMMdd:HHmmss"), (int)deviceInfo.Result.Item1.Status, deviceInfo.Result.Item2);
+
+                    // task 2
+                    Task<(int, int)> result = device.GetZip(cancellationTokenSource.Token, timeout);
+
+                    if (result.Result.Item2 == 0x9000)
+                    {
+                        Console.WriteLine("{0}: (4) SimulatorDevice:GetZip - status=0x0{1:X4}, result=0x0{2:X4}", DateTime.Now.ToString("yyyyMMdd:HHmmss"), result.Result.Item1, result.Result.Item2);
+                    }
+                }
             }
             catch (AggregateException ae)
             {
                 foreach (var e in ae.InnerExceptions)
                 {
-                    Console.WriteLine($"SimulatorDevice::GetZip() - {e.GetType().Name}='{e.Message}'");
+                    Console.WriteLine($"SimulatorDevice::GetZip - {e.GetType().Name}='{e.Message}'");
                 }
             }
             finally

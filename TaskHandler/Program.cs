@@ -22,19 +22,20 @@ namespace TaskHandler
                 SimulatorDevice simulator = new SimulatorDevice();
 
                 // each task takes ~ 1000 ms to complete
-                int timeout = 6500;
+                int timeout = 3500;
                 var cancelTokenSource = new CancellationTokenSource(timeout);
 
-                // number of tasks: 6
+                // number of tasks: 3
                 simulator.ProcessCardInfo(cancelTokenSource, timeout);
 
                 cancelTokenSource.Cancel();
+                cancelTokenSource.Dispose();
 
                 // Transaction will timeout: task takes ~ 1000 ms to complete
-                timeout = 500;
+                timeout = 1500;
                 cancelTokenSource = new CancellationTokenSource(timeout);
 
-                // number of tasks: 1
+                // number of tasks: 2
                 simulator.GetZip(cancelTokenSource, timeout);
 
                 cancelTokenSource.Cancel();
