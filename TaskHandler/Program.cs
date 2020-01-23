@@ -7,33 +7,45 @@ namespace TaskHandler
 {
     class Program
     {
+        private static SimulatorDevice simulator = new SimulatorDevice();
+
         static void Main(string[] args)
         {
-            ProcessCardInfo();
+            GetCardData();
+
+            GetZip();
 
             //Console.WriteLine("\r\nPress any key to exit...");
             //Console.ReadKey();
         }
 
-        static void ProcessCardInfo()
+        static void GetCardData()
         {
             try
             {
-                SimulatorDevice simulator = new SimulatorDevice();
-
                 // each task takes ~ 1000 ms to complete
                 int timeout = 3500;
                 var cancelTokenSource = new CancellationTokenSource(timeout);
 
                 // number of tasks: 3
-                simulator.ProcessCardInfo(cancelTokenSource, timeout);
+                simulator.GetCardData(cancelTokenSource, timeout);
 
                 cancelTokenSource.Cancel();
                 cancelTokenSource.Dispose();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"main: executing exception='{e.Message}'");
+            }
+        }
 
-                // Transaction will timeout: task takes ~ 1000 ms to complete
-                timeout = 1500;
-                cancelTokenSource = new CancellationTokenSource(timeout);
+        static void GetZip()
+        {
+            try
+            {
+                // each task takes ~ 1000 ms to complete
+                int timeout = 1500;
+                var cancelTokenSource = new CancellationTokenSource(timeout);
 
                 // number of tasks: 2
                 simulator.GetZip(cancelTokenSource, timeout);

@@ -16,13 +16,13 @@ namespace TaskHandler.Devices.Simulator
             device = new TaskEventHandler();
         }
 
-        public void ProcessCardInfo(CancellationTokenSource cancellationTokenSource, int timeout)
+        public void GetCardData(CancellationTokenSource cancellationTokenSource, int timeout)
         {
             Stopwatch stopWatch = new Stopwatch();
 
             try
             {
-                Console.WriteLine($"{DateTime.Now.ToString("yyyyMMdd:HHmmss")}: (0) Transaction Start  - ################");
+                Console.WriteLine($"{DateTime.Now.ToString("yyyyMMdd:HHmmss")}: (0) SimulatorDevice::GetCardData Start  - ################");
 
                 stopWatch.Start();
 
@@ -74,7 +74,7 @@ namespace TaskHandler.Devices.Simulator
 
             try
             {
-                Console.WriteLine($"{DateTime.Now.ToString("yyyyMMdd:HHmmss")}: (0) Transaction Start  - ################");
+                Console.WriteLine($"{DateTime.Now.ToString("yyyyMMdd:HHmmss")}: (0) SimulatorDevice::GetZip Start  - ################");
 
                 stopWatch.Start();
 
