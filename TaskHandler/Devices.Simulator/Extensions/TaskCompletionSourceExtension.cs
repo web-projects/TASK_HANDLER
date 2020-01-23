@@ -53,7 +53,7 @@ namespace TaskHandler.Extensions
                         // operation timed out
                         if (timeoutCancelTokenSource?.IsCancellationRequested ?? false)
                         {
-                            throw new TimeoutException($"operation timed out after {timeoutMs}ms");
+                            throw new TimeoutException($"operation timed out after {timeoutMs} ms");
                         }
 
                         throw new OperationCanceledException();

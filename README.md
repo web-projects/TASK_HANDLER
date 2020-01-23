@@ -33,4 +33,5 @@ This an applicationto test TaskCompletionSource with timers.
 * 20191218 - Initial repository
            - Added WaitAsync implementation
 * 20191219 - Enhanced Async methods
+* 20200122 - Cleaned up CancelationToke
            

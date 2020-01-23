@@ -18,8 +18,6 @@ namespace TaskHandler.Handler
             ResponseTagsHandler = responseTagsHandler;
             ResponseContactlessHandler = responseContactlessHandler;
 
-            Thread.Sleep(2000);
-
             if (ResponseTagsHandler != null)
             {
                 ResponseTagsHandler?.Invoke(responseCode = command);

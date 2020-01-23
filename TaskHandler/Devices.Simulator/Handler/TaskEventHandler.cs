@@ -8,6 +8,7 @@ namespace TaskHandler.Handler
 {
     public class TaskEventHandler
     {
+        #region --- attributes ---
         private int _ResponseTagsHandlersSubscribed = 0;
         private int _ResponseCLessHandlersSubscribed = 0;
 
@@ -21,20 +22,17 @@ namespace TaskHandler.Handler
         internal ResponseContactlessHandlerDelegate ResponseCLessHandler = null;
 
         private MockEventProcessor processor = new MockEventProcessor();
+        #endregion --- attributes ---
 
-        private void WriteSingleCmd(int command, int delay)
+        private async Task WriteSingleCmdAsync(int command)
         {
-            Task.Delay(delay).ContinueWith(t =>
-            {
-                processor.MockEvent(ResponseTagsHandler, ResponseCLessHandler, command);
-            });
-        }
+            int writeDelay = 2000;
 
-        private async Task WriteSingleCmdAsync(int command, int delay)
-        {
-            await Task.Delay(delay).ContinueWith(t =>
+            await Task.Run(async delegate
             {
+                await Task.Delay(writeDelay);
                 processor.MockEvent(ResponseTagsHandler, ResponseCLessHandler, command);
+                return Task.CompletedTask;
             });
         }
 
@@ -43,7 +41,7 @@ namespace TaskHandler.Handler
             return 0;
         }
 
-        public async Task<(int, int)> ProcessContactlessTransaction(int timeout)
+        public (int, int) ProcessContactlessTransaction(CancellationToken cancellationToken, int timeout)
         {
             (int, int) cardStatus = (0, (int)StatusCodes.VipaSW1SW2Codes.Failure);
 
@@ -57,10 +55,9 @@ namespace TaskHandler.Handler
                 // 0x9000 - CLessStatus
                 int command = 0x9000;
                 Console.WriteLine("{0}: (1) ProcessCLessTrans  - status=0x0{1:X4}", DateTime.Now.ToString("yyyyMMdd:HHmmss"), command);
-                await WriteSingleCmdAsync(command, timeout / 2);
+                _ = WriteSingleCmdAsync(command);
 
-                var cancelTokenSource = new CancellationTokenSource(timeout);
-                await TaskCompletionSourceExtension.WaitAsync(_CLessStatusResult, cancelTokenSource.Token, timeout);
+                _ = TaskCompletionSourceExtension.WaitAsync(_CLessStatusResult, cancellationToken, timeout, true);
 
                 var deviceResult = _CLessStatusResult.Task.Result;
 
@@ -79,14 +76,15 @@ namespace TaskHandler.Handler
                 Console.WriteLine($"{DateTime.Now.ToString("yyyyMMdd:HHmmss")}: {e.Message}");
                 Console.WriteLine("=====================================================================\r\n");
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException op)
             {
+                Console.WriteLine($"ProcessContactlessTransaction: exception={op.Message}");
             }
 
             return cardStatus;
         }
 
-        public async Task<(int, int)> ContinueContactlessTransaction(int timeout)
+        public (int, int) ContinueContactlessTransaction(CancellationToken cancellationToken, int timeout)
         {
             (int, int) cardStatus = (0, (int)StatusCodes.VipaSW1SW2Codes.Failure);
 
@@ -98,10 +96,9 @@ namespace TaskHandler.Handler
 
                 int command = 0x0003;
                 Console.WriteLine("{0}: (3) Continue CLess     - status=0x0{1:X4}", DateTime.Now.ToString("yyyyMMdd:HHmmss"), command);
-                await WriteSingleCmdAsync(command, timeout - 1000);
+                _ = WriteSingleCmdAsync(command);
 
-                var cancelTokenSource = new CancellationTokenSource(timeout);
-                await TaskCompletionSourceExtension.WaitAsync(_CLessStatusResult, cancelTokenSource.Token, timeout);
+                _ = TaskCompletionSourceExtension.WaitAsync(_CLessStatusResult, cancellationToken, timeout, true);
 
                 var deviceResult = _CLessStatusResult.Task.Result;
 
@@ -128,7 +125,7 @@ namespace TaskHandler.Handler
             return cardStatus;
         }
 
-        public async Task<(int, int)> CompleteContactlessTransaction(int timeout)
+        public (int, int) CompleteContactlessTransaction(CancellationToken cancellationToken, int timeout)
         {
             (int, int) cardStatus = (0, (int)StatusCodes.VipaSW1SW2Codes.Failure);
 
@@ -140,10 +137,9 @@ namespace TaskHandler.Handler
 
                 int command = 0x0003;
                 Console.WriteLine("{0}: (5) Complete CLess     - status=0x0{1:X4}", DateTime.Now.ToString("yyyyMMdd:HHmmss"), command);
-                await WriteSingleCmdAsync(command, timeout - 1000);
+                _ = WriteSingleCmdAsync(command);
 
-                var cancelTokenSource = new CancellationTokenSource(timeout);
-                await TaskCompletionSourceExtension.WaitAsync(_CLessStatusResult, cancelTokenSource.Token, timeout);
+                _ = TaskCompletionSourceExtension.WaitAsync(_CLessStatusResult, cancellationToken, timeout, true);
 
                 var deviceResult = _CLessStatusResult.Task.Result;
 
@@ -170,14 +166,58 @@ namespace TaskHandler.Handler
             return cardStatus;
         }
 
+        public (int, int) GetZip(CancellationToken cancellationToken, int timeout)
+        {
+            (int, int) cardStatus = (0, (int)StatusCodes.VipaSW1SW2Codes.Failure);
+
+            try
+            {
+                _CLessStatusResult = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
+                _ResponseCLessHandlersSubscribed++;
+                ResponseCLessHandler += ContactlessStatusHandler;
+
+                int command = 0x0003;
+                Console.WriteLine("{0}: (1) GetZip             - status=0x0{1:X4}", DateTime.Now.ToString("yyyyMMdd:HHmmss"), command);
+                _ = WriteSingleCmdAsync(command);
+
+                _ = TaskCompletionSourceExtension.WaitAsync(_CLessStatusResult, cancellationToken, timeout, true);
+
+                var deviceResult = _CLessStatusResult.Task.Result;
+
+                if (deviceResult == command)
+                {
+                    cardStatus.Item1 = 0x01;
+                    cardStatus.Item2 = (int)StatusCodes.VipaSW1SW2Codes.Success;
+                }
+
+                ResponseCLessHandler -= ContactlessStatusHandler;
+                _ResponseCLessHandlersSubscribed--;
+
+            }
+            catch (TimeoutException e)
+            {
+                Console.WriteLine("\r\n=========================== TIMEOUT ERROR ===========================");
+                Console.WriteLine($"{DateTime.Now.ToString("yyyyMMdd:HHmmss")}: {e.Message}");
+                Console.WriteLine("=====================================================================\r\n");
+            }
+            catch (OperationCanceledException)
+            {
+            }
+
+            return cardStatus;
+        }
+
+        #region --- delegate handlers ---
         public void CardStatusHandler(int responseCode, bool cancelled = false)
         {
             _CardStatusResult?.TrySetResult(responseCode);
+
         }
 
         public void ContactlessStatusHandler(int responseCode, bool cancelled = false)
         {
             _CLessStatusResult?.TrySetResult(responseCode);
         }
+        #endregion --- delegate handlers ---
     }
 }
