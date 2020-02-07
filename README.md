@@ -1,6 +1,6 @@
 # README #
 
-This an application to test TaskCompletionSource with timers.
+This is an application to test TaskCompletionSource with timers.
 
 ### What is this repository for? ###
 
