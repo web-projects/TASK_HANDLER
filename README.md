@@ -4,7 +4,7 @@ This is an application to test TaskCompletionSource with timers.
 
 ### What is this repository for? ###
 
-* DEVICE EMULATOR APPLICATION
+* TASK HANDLER APPLICATION
 * 1.00.0.(100)
 * git remote add origin https://github.com/web-projects/TASK_HANDLER.git
 

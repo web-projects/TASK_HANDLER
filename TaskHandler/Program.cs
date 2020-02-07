@@ -15,8 +15,8 @@ namespace TaskHandler
 
             GetZip();
 
-            //Console.WriteLine("\r\nPress any key to exit...");
-            //Console.ReadKey();
+            Console.WriteLine("\r\nPress any key to exit...");
+            Console.ReadKey();
         }
 
         static void GetCardData()
@@ -24,7 +24,7 @@ namespace TaskHandler
             try
             {
                 // each task takes ~ 1000 ms to complete
-                int timeout = 3500;
+                int timeout = 1500;
                 var cancelTokenSource = new CancellationTokenSource(timeout);
 
                 // number of tasks: 3
