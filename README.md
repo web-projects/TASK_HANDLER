@@ -5,7 +5,7 @@ This is an application to test TaskCompletionSource with timers.
 ### What is this repository for? ###
 
 * TASK HANDLER APPLICATION
-* 1.01.0.(100)
+* 1.00.1.(100)
 * git remote add origin https://github.com/web-projects/TASK_HANDLER.git
 
 ### How do I get set up? ###
