@@ -1,6 +1,6 @@
 # README #
 
-This an applicationto test TaskCompletionSource with timers.
+This an application to test TaskCompletionSource with timers.
 
 ### What is this repository for? ###
 
@@ -35,3 +35,4 @@ This an applicationto test TaskCompletionSource with timers.
 * 20191219 - Enhanced Async methods
 * 20200122 - Cleaned up CancellationToken
 * 20200123 - Improved Cancellation workflow
+* 20200206 - Cleaned up README file
